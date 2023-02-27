@@ -1,0 +1,4 @@
+name: CloudSystem
+version: 1.0.3
+author: JavaProjekt
+main: dev.javaprojekt.cloudsystem.server.bungee.CloudBungee

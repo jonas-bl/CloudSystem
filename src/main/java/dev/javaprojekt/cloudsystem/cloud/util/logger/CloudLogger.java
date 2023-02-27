@@ -1,6 +1,8 @@
 package dev.javaprojekt.cloudsystem.cloud.util.logger;
 
 import dev.javaprojekt.cloudsystem.cloud.CloudLoader;
+import dev.javaprojekt.cloudsystem.cloud.consoleutil.ConsoleColor;
+import org.jline.reader.LineReader;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -9,8 +11,11 @@ public class CloudLogger {
 
     private static CloudLogger instance;
 
-    public CloudLogger() {
+    private LineReader lineReader;
+
+    public CloudLogger(LineReader lineReader) {
         instance = this;
+        this.lineReader = lineReader;
     }
 
     public static CloudLogger getInstance() {
@@ -18,7 +23,10 @@ public class CloudLogger {
     }
 
     public void printMessage(String text) {
-        System.out.println("[" + getDate() + " " + getTime() + "] " + text);
+        if (lineReader == null) System.out.println("[" + getDate() + " " + getTime() + "] " + text);
+        else
+            lineReader.printAbove("[" + getDate() + " " + getTime() + "] " + text);
+
     }
 
     public void log(String text) {
@@ -39,8 +47,8 @@ public class CloudLogger {
 
     public String getInputPrefix() {
         if (CloudLoader.getModuleType() == null) {
-            return "admin@cloud » ";
+            return ConsoleColor.CYAN.toString() + "admin@cloud » " + ConsoleColor.WHITE.toString();
         }
-        return CloudLoader.getModuleType().name().toLowerCase() + "@cloud » ";
+        return ConsoleColor.CYAN.toString() + CloudLoader.getModuleType().name().toLowerCase() + "@cloud » " + ConsoleColor.WHITE.toString();
     }
 }

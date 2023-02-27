@@ -1,8 +1,9 @@
 package dev.javaprojekt.cloudsystem.socket;
 
-import dev.javaprojekt.cloudsystem.cloud.server.ServerGroup;
-import dev.javaprojekt.cloudsystem.cloud.server.enums.ServerType;
-import dev.javaprojekt.cloudsystem.cloud.server.enums.ServerVersion;
+import dev.javaprojekt.cloudsystem.cloud.server.CloudServer;
+import dev.javaprojekt.cloudsystem.cloud.slave.CloudSlave;
+import dev.javaprojekt.cloudsystem.cloud.util.logger.CloudLogger;
+import dev.javaprojekt.cloudsystem.server.Constants;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -11,13 +12,23 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
+import lombok.SneakyThrows;
+import net.md_5.bungee.api.ProxyServer;
+import org.bukkit.Bukkit;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Scanner;
+import java.net.Socket;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class SocketClient {
+public class SocketClient implements Runnable {
     private final String host;
     private final int port;
+    private UUID serverUUID;
+    private int failedConnections = 1;
 
     public SocketClient(String host, int port) {
         this.host = host;
@@ -26,7 +37,31 @@ public class SocketClient {
 
     private ChannelFuture channelFuture;
 
+    private NioEventLoopGroup nioEventLoopGroup;
+
+    public NioEventLoopGroup getNioEventLoopGroup() {
+        return nioEventLoopGroup;
+    }
+
     private Channel channel;
+
+    private boolean ready;
+
+    public void setFailedConnections(int failedConnections) {
+        this.failedConnections = failedConnections;
+    }
+
+    public boolean isReady() {
+        return ready;
+    }
+
+    public void setServerUUID(UUID serverUUID) {
+        this.serverUUID = serverUUID;
+    }
+
+    public UUID getServerUUID() {
+        return serverUUID;
+    }
 
     public ChannelFuture getChannelFuture() {
         return this.channelFuture;
@@ -36,60 +71,71 @@ public class SocketClient {
         return this.channel;
     }
 
-    public void start() {
-        System.out.println("Connecting to cloud...");
-        new Thread(() -> {
-            while (true) {
-                Scanner scanner = new Scanner(System.in);
-                if (scanner.nextLine().equalsIgnoreCase("send")) {
-                    System.out.println("Sending packet...");
-                    ServerGroup group = new ServerGroup("Test", ServerType.TEMPLATE, ServerVersion.SPIGOT, 512, 1, 1);
-                    channel.writeAndFlush(group);
-                }
-            }
-        }).start();
-        NioEventLoopGroup nioEventLoopGroup = new NioEventLoopGroup();
+    @SneakyThrows
+    public void run() {
+        if (SocketClientType.getSocketClientType() == SocketClientType.SLAVE) {
+            CloudLogger.getInstance().log("Connecting to the cloud...");
+        } else {
+            System.out.println("Connecting to the cloud...");
+        }
+        nioEventLoopGroup = new NioEventLoopGroup();
         try {
-            try {
-                Bootstrap bootstrap = new Bootstrap();
-                bootstrap.group(nioEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
-                    protected void initChannel(SocketChannel socketChannel) {
-                        socketChannel.pipeline().addLast(new ObjectDecoder(2147483647, ClassResolvers.cacheDisabled(getClass().getClassLoader())));
-                        socketChannel.pipeline().addLast((ChannelHandler)new ObjectEncoder());
-                        socketChannel.pipeline().addLast((ChannelHandler)new SocketClientHandler());
-                    }
-                });
-                this.channelFuture = bootstrap.connect(this.host, this.port);
-                this.channel = this.channelFuture.channel();
-                ChannelFuture closeFuture = this.channel.closeFuture();
-                closeFuture.addListener(channelFuture1 -> {
-                    Thread curr = Thread.currentThread();
-                    while (!curr.isInterrupted());
-                });
-                closeFuture.sync();
-            } catch (Exception exc) {
-                exc.printStackTrace();
-                System.out.println("[1] Could not connect to CloudSystem! Reconnect in 2 seconds...");
-                System.out.println("Netty thread stopped.");
-            }
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(nioEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
+                protected void initChannel(SocketChannel socketChannel) {
+                    socketChannel.pipeline().addLast(new ObjectDecoder(2147483647, ClassResolvers.cacheDisabled(getClass().getClassLoader())));
+                    socketChannel.pipeline().addLast(new ObjectEncoder());
+                    socketChannel.pipeline().addLast(new SocketClientHandler());
+                }
+            });
+            this.channelFuture = bootstrap.connect(this.host, this.port);
+            this.channel = this.channelFuture.channel();
+            ChannelFuture closeFuture = this.channel.closeFuture();
+            closeFuture.addListener(channelFuture1 -> {
+                Thread curr = Thread.currentThread();
+                while (!curr.isInterrupted()) ;
+            });
+            closeFuture.sync();
+        } catch (Exception exc) {
+            exc.printStackTrace();
         } finally {
-            System.out.println("Netty thread stopped.");
+            if (SocketClientType.getSocketClientType() == SocketClientType.SLAVE) {
+                int i = failedConnections + 1;
+                if (i >= 5) {
+                    System.exit(0);
+                }
+                CloudLogger.getInstance().log("Could not connect to the CloudCommander! Reconnecting... (Attempt " + failedConnections + ")");
+                final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+                executorService.schedule(() -> {
+                    CloudLogger.getInstance().log("Trying to connect to the Commander...");
+                    CloudSlave.getInstance().restartSocket();
+                    CloudSlave.getSocketClient().setFailedConnections(i);
+                }, 6, TimeUnit.SECONDS);
+            }else if (SocketClientType.getSocketClientType() == SocketClientType.PROXY) {
+                ProxyServer.getInstance().getConsole().sendMessage(Constants.PREFIX + "§cCould not connect to the Commander!");
+                ProxyServer.getInstance().getConsole().sendMessage(Constants.PREFIX + "§cShutting down Proxy...");
+                ProxyServer.getInstance().stop();
+            }
+            else if (SocketClientType.getSocketClientType() == SocketClientType.SPIGOT) {
+                Bukkit.getConsoleSender().sendMessage(Constants.PREFIX + "§cCould not connect to the Commander!");
+                Bukkit.getConsoleSender().sendMessage(Constants.PREFIX + "§cShutting down Server...");
+                Bukkit.shutdown();
+            }else {
+                System.out.println("Could not connect to the cloud!");
+            }
         }
     }
 
+    public void stop() {
+        getChannel().close();
+        getNioEventLoopGroup().shutdownGracefully();
+    }
+
     public static void main(String[] args) throws Exception {
-       /* if(args.length != 2) {
-            System.err.println("Usage: " + EchoClient.class.getSimpleName() + " <host> <port>");
-            return;
-        }
+        final String host = "91.218.67.143";
+        final int port = 24300;
+        SocketClient client = new SocketClient(host, port);
+        new Thread(client).start();
 
-        final String host = args[0];
-        final int port = Integer.parseInt(args[1]);
-        new EchoClient(host, port).start();
-
-        */
-        final String host = "localhost";
-        final int port = 7000;
-        new SocketClient(host, port).start();
     }
 }

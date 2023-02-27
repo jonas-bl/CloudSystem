@@ -1,8 +1,12 @@
 package dev.javaprojekt.cloudsystem.cloud.server.enums;
 
-public enum ServerVersion {
+import java.io.Serializable;
+
+public enum ServerVersion implements Serializable {
 
     SPIGOT,
-    PROXY
+    PROXY;
+
+    private static final long serialVersionUID = 145672346573L;
 
 }

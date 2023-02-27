@@ -1,0 +1,6 @@
+name: CloudSystem
+version: 1.0.3
+main: dev.javaprojekt.cloudsystem.server.spigot.CloudSpigot
+load: STARTUP
+commands:
+  cloudsign:

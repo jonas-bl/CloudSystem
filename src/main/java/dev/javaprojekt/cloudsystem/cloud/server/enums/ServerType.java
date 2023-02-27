@@ -1,6 +1,8 @@
 package dev.javaprojekt.cloudsystem.cloud.server.enums;
 
-public enum ServerType {
+import java.io.Serializable;
+
+public enum ServerType implements Serializable {
 
     TEMPLATE,
     STATIC

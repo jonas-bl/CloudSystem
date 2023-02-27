@@ -1,10 +1,18 @@
 package dev.javaprojekt.cloudsystem.cloud;
 
 import dev.javaprojekt.cloudsystem.cloud.commander.CloudCommander;
+import dev.javaprojekt.cloudsystem.cloud.config.cf.CloudConfigManager;
 import dev.javaprojekt.cloudsystem.cloud.consoleutil.ConsoleCommandHandler;
+import dev.javaprojekt.cloudsystem.cloud.server.ServerTemplateManager;
+import dev.javaprojekt.cloudsystem.cloud.server.CloudServerManager;
+import dev.javaprojekt.cloudsystem.cloud.slave.CloudSlave;
+import dev.javaprojekt.cloudsystem.cloud.slave.manager.CloudSlaveManager;
+import dev.javaprojekt.cloudsystem.cloud.util.license.LicenseChecker;
 import dev.javaprojekt.cloudsystem.cloud.util.logger.CloudLogger;
 import dev.javaprojekt.cloudsystem.enums.ModuleType;
+import dev.javaprojekt.cloudsystem.file.FileManager;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 public class CloudLoader {
@@ -22,8 +30,18 @@ public class CloudLoader {
 
 
     public static void main(String[] args) {
-        new CloudLogger();
-       String module = System.getProperty("module");
+        new CloudLogger(null);
+        String module = null;
+        for (String arg : args) {
+            if (arg.equals("--module=COMMANDER")) {
+                module = "COMMANDER";
+                break;
+            }
+            if (arg.equals("--module=SLAVE")) {
+                module = "SLAVE";
+                break;
+            }
+        }
         boolean isModuleDefined = false;
         if (module == null || module.isEmpty()) {
             System.out.println("[Cloud] No module selected!");
@@ -39,7 +57,7 @@ public class CloudLoader {
                 "| |____| | (_) | |_| | (_| |____) | |_| \\__ \\ ||  __/ | | | | |\n" +
                 " \\_____|_|\\___/ \\__,_|\\__,_|_____/ \\__, |___/\\__\\___|_| |_| |_|\n" +
                 "                                    __/ |                      \n" +
-                "                                   |___/        by Jonas B.   v.1.0          \n");
+                "                                   |___/        by Jonas B.   v.1.3.2          \n");
         System.out.println("[Cloud] Initiating cloudsystem...");
         if (!isModuleDefined) {
             System.out.println("[Cloud] No valid module in start script defined!");
@@ -65,8 +83,14 @@ public class CloudLoader {
                 }
             }
         }
-        new ConsoleCommandHandler();
-       new CloudCommander().enable();
+        loadBasics();
+        if (moduleType == ModuleType.COMMANDER) {
+            new ConsoleCommandHandler();
+            new CloudCommander().enable();
+        }
+        if (moduleType == ModuleType.SLAVE) {
+            new CloudSlave().enable();
+        }
     }
 
     public static String getPrefix() {
@@ -75,5 +99,18 @@ public class CloudLoader {
 
     public static ModuleType getModuleType() {
         return moduleType;
+    }
+
+    public static void loadBasics() {
+        CloudConfigManager.init();
+        FileManager.createFiles();
+        new CloudServerManager();
+        try {
+            new ServerTemplateManager().importTemplates();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        CloudSlaveManager cloudSlaveManager = new CloudSlaveManager();
+        cloudSlaveManager.importSlaves();
     }
 }
