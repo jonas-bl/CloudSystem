@@ -10,6 +10,7 @@ Network & Server Management System for Minecraft Networks.
 - CloudAPI for integration in plugins
 - Dynamic start of (Game) servers
 - Dynamic Player-To-Lobby sending
+- Server Signs
 ## Requirements
 - Java 8 (or newer)
 - **Note**: for Minecraft versions below 1.17 you require Java 8
