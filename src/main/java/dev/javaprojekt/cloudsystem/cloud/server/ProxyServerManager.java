@@ -82,7 +82,7 @@ public class ProxyServerManager {
 
         try {
             File parent = server.isStatic() ? new File("static/" + server.getName() + "/") : new File("temp/" + server.getTempName() + "/");
-            Process process = (new ProcessBuilder(new String[]{"/bin/sh", "-c", "screen -mdS " + server.getTempName() + " /bin/sh -c 'cd " + parent.getAbsolutePath() + " && java -server -Xmx" + server.getRam() + "M -jar bungeecord.jar'"})).start();
+            Process process = (new ProcessBuilder("/bin/sh", "-c", "screen -mdS " + server.getTempName() + " /bin/sh -c 'cd " + parent.getAbsolutePath() + " && java -server -Xmx" + server.getRam() + "M -jar bungeecord.jar'")).start();
             //  processBuilder.directory(parent);
             //  processBuilder.start();
             CloudServerManager.getInstance().getServerProcess().put(server.getServerUUID(), process);

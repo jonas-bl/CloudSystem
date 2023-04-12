@@ -1,6 +1,5 @@
 package dev.javaprojekt.cloudsystem.cloud.server;
 
-import com.sun.corba.se.impl.activation.ServerMain;
 import dev.javaprojekt.cloudsystem.cloud.server.enums.ServerState;
 import dev.javaprojekt.cloudsystem.cloud.slave.manager.CloudSlaveManager;
 import dev.javaprojekt.cloudsystem.cloud.util.logger.CloudLogger;
@@ -87,7 +86,7 @@ public class SpigotServerManager {
 
         try {
             File parent = server.isStatic() ? new File("static/" + server.getName() + "/") : new File("temp/" + server.getTempName() + "/");
-            Process process = (new ProcessBuilder(new String[]{"/bin/sh", "-c", "screen -mdS " + server.getTempName() + " /bin/sh -c 'cd " + parent.getAbsolutePath() + " && java -server -Xmx" + server.getRam() + "M  -Dcom.mojang.eula.agree=true -jar spigot.jar -p " + server.getPort() + "'"})).start();
+            Process process = (new ProcessBuilder("/bin/sh", "-c", "screen -mdS " + server.getTempName() + " /bin/sh -c 'cd " + parent.getAbsolutePath() + " && java -server -Xmx" + server.getRam() + "M -Dcom.mojang.eula.agree=true -jar spigot.jar -p " + server.getPort() + "'")).start();
             //  processBuilder.directory(parent);
             //  processBuilder.start();
             CloudServerManager.getInstance().getServerProcess().put(server.getServerUUID(), process);

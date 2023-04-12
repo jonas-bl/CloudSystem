@@ -73,7 +73,7 @@ public class CloudSpigot extends JavaPlugin {
                 CloudServerInfo serverInfo = CloudAPI.getInstance().getThisServer().getCloudServerInfo();
                 serverInfo.setMotd(Bukkit.getServer().getMotd());
                 serverInfo.setMaxPlayers(Bukkit.getServer().getMaxPlayers());
-                System.out.println("MaxPlayers of this server: " + Bukkit.getServer().getMaxPlayers());
+                System.out.println("[CloudSystem] Startup complete!");
                 CloudAPI.getInstance().updateCloudServerInfo(serverInfo);
                 CloudAPI.getInstance().getCloudSignManager().startTask();
             }

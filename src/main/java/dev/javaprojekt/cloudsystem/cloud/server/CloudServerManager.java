@@ -3,41 +3,54 @@ package dev.javaprojekt.cloudsystem.cloud.server;
 import dev.javaprojekt.cloudsystem.cloud.server.enums.ServerVersion;
 import dev.javaprojekt.cloudsystem.cloud.slave.manager.CloudSlaveManager;
 import dev.javaprojekt.cloudsystem.cloud.util.logger.CloudLogger;
-import sun.java2d.loops.ProcessPath;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class CloudServerManager {
 
+    private static CloudServerManager instance;
     private HashMap<UUID, CloudServer> cloudServer = new HashMap<>();
     private HashMap<UUID, Process> serverProcess = new HashMap<>();
+    private ArrayList<Integer> usedSpigotPorts = new ArrayList<>();
+    private ArrayList<Integer> usedProxyPorts = new ArrayList<>();
+    private SpigotServerManager spigotServerManager;
+    private ProxyServerManager proxyServerManager;
+
+    public CloudServerManager() {
+        instance = this;
+        this.proxyServerManager = new ProxyServerManager();
+        this.spigotServerManager = new SpigotServerManager();
+    }
+
+    public static CloudServerManager getInstance() {
+        return instance;
+    }
 
     public HashMap<UUID, Process> getServerProcess() {
         return serverProcess;
     }
 
     public void forceStopServer(UUID uuid) {
-        ServerStarterQueue.getInstance().removeStarting(uuid);
-        ServerStarterQueue.getInstance().getRequests().remove(uuid);
         Process process = serverProcess.get(uuid);
         CloudServer cloudServer = CloudServerManager.getInstance().getServerByUUID(uuid);
-        if(cloudServer.getTemplate().getServerVersion().equals(ServerVersion.PROXY)) {
-            CloudServerManager.getInstance().getUsedProxyPorts().remove((Object)cloudServer.getPort());
-        }else {
-            CloudServerManager.getInstance().getUsedSpigotPorts().remove((Object)cloudServer.getPort());
+        if (cloudServer.getTemplate().getServerVersion().equals(ServerVersion.PROXY)) {
+            CloudServerManager.getInstance().getUsedProxyPorts().remove((Object) cloudServer.getPort());
+        } else {
+            CloudServerManager.getInstance().getUsedSpigotPorts().remove((Object) cloudServer.getPort());
         }
         CloudServerManager.getInstance().getCloudServer().remove(uuid);
-        if(process == null)return;
+        ServerStarterQueue.getInstance().removeStarting(uuid);
+        ServerStarterQueue.getInstance().getRequests().remove(uuid);
+        if (process == null) return;
         CloudLogger.getInstance().log("Process found!");
         process.destroy();
         final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
         executor.schedule(() -> {
-            if(process.isAlive()) {
+            if (process.isAlive()) {
                 CloudLogger.getInstance().log("Process still alive!");
                 CloudLogger.getInstance().log("Exiting...");
                 process.destroyForcibly();
@@ -55,10 +68,6 @@ public class CloudServerManager {
         return list;
     }
 
-    private ArrayList<Integer> usedSpigotPorts = new ArrayList<>();
-
-    private ArrayList<Integer> usedProxyPorts = new ArrayList<>();
-
     public ArrayList<Integer> getUsedProxyPorts() {
         return usedProxyPorts;
     }
@@ -71,12 +80,6 @@ public class CloudServerManager {
         return cloudServer;
     }
 
-    private static CloudServerManager instance;
-
-    public static CloudServerManager getInstance() {
-        return instance;
-    }
-
     public CloudServer getServerByName(String name) {
         for (CloudServer server : getCloudServer().values()) {
             if (server.getName().equalsIgnoreCase(name)) return server;
@@ -86,15 +89,6 @@ public class CloudServerManager {
 
     public CloudServer getServerByUUID(UUID uuid) {
         return getCloudServer().get(uuid);
-    }
-
-    private SpigotServerManager spigotServerManager;
-    private ProxyServerManager proxyServerManager;
-
-    public CloudServerManager() {
-        instance = this;
-        this.proxyServerManager = new ProxyServerManager();
-        this.spigotServerManager = new SpigotServerManager();
     }
 
     public void updateServerInfo(UUID serverUUID, CloudServerInfo serverInfo) {
@@ -109,7 +103,7 @@ public class CloudServerManager {
         int ram = 0;
         for (CloudServer server : getCloudServer().values()) {
             if (server.getTemplate().getSlave().equals(slave)) {
-                ram+= server.getRam();
+                ram += server.getRam();
             }
         }
         return ram;
@@ -125,7 +119,7 @@ public class CloudServerManager {
 
     public synchronized CloudServer prepareAndStartServer(ServerTemplate template, ServerTemplate copyTemplate, UUID serverUUID) {
         int usedRam = getUsedRam();
-        if(usedRam >= CloudSlaveManager.getInstance().getThisSlave().getMaxRam()) {
+        if (usedRam >= CloudSlaveManager.getInstance().getThisSlave().getMaxRam()) {
             CloudLogger.getInstance().log("[Error] Could not start a new server for " + template.getName() + " because no more RAM is available for this Slave.");
             return null;
         }
@@ -156,9 +150,9 @@ public class CloudServerManager {
         CloudServer cloudServer = getCloudServer().get(serverUUID);
         if (cloudServer == null) return;
         if (cloudServer.getTemplate().getServerVersion() == ServerVersion.SPIGOT) {
-            getUsedSpigotPorts().remove((Object)cloudServer.getPort());
+            getUsedSpigotPorts().remove((Object) cloudServer.getPort());
         } else {
-            getUsedProxyPorts().remove((Object)cloudServer.getPort());
+            getUsedProxyPorts().remove((Object) cloudServer.getPort());
         }
         getCloudServer().remove(serverUUID);
     }

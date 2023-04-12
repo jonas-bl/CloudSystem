@@ -41,7 +41,8 @@ public class CloudSignCommand implements CommandExecutor {
                     return true;
                 }
                 Block block =  player.getTargetBlock((Set<Material>) null, 5);
-                if(block.getType() == null || !block.getType().equals(Material.WALL_SIGN)) {
+                block.getType();
+                if(!block.getType().name().contains("WALL_SIGN")) {
                     player.sendMessage(Constants.PREFIX + "§cYou must look at a sign to create a new one.");
                     return true;
                 }
@@ -58,7 +59,8 @@ public class CloudSignCommand implements CommandExecutor {
             }
             if (args[0].equalsIgnoreCase("delete")) {
                 Block block =  player.getTargetBlock((Set<Material>) null, 5);
-                if(block.getType() == null || !block.getType().equals(Material.WALL_SIGN)) {
+                block.getType();
+                if(!block.getType().name().contains("WALL_SIGN")){
                     player.sendMessage(Constants.PREFIX + "§cYou must look at a sign to create a new one.");
                     return true;
                 }

@@ -108,7 +108,7 @@ public class CloudSignManager {
             @Override
             public void run() {
                 cloudSign.getSignLocation().getBlock().setType(Material.AIR);
-                cloudSign.getSignLocation().getWorld().dropItem(cloudSign.getSignLocation(), new ItemStack(Material.SIGN));
+                cloudSign.getSignLocation().getWorld().dropItem(cloudSign.getSignLocation(), new ItemStack(Material.OAK_WALL_SIGN));
             }
         },20L);
         CloudSpigot.getInstance().getConfig().set("Signs." + cloudSign.getId(), null);
@@ -122,7 +122,7 @@ public class CloudSignManager {
                 (Location) CloudSpigot.getInstance().getConfig().get("Signs." + id + ".Location", Location.class) );
         getSigns().add(new CloudSign(id, cloudSign.getTemplate(), cloudSign.getSignLocation()));
         Block block = cloudSign.getSignLocation().getBlock();
-        if(block.getType() != null && block.getType().equals(Material.WALL_SIGN)) {
+        if(block.getType() != null && block.getType().name().contains("WALL_SIGN")) {
             Sign sign = (Sign) cloudSign.getSignLocation().getBlock().getState();
             sign.setLine(0, "[" + cloudSign.getTemplate() + "]");
             sign.setLine(1, " ");
@@ -161,7 +161,7 @@ public class CloudSignManager {
     private void updateFreeSigns() {
         for (CloudSign cloudSign : getSigns()) {
             Block block = cloudSign.getSignLocation().getBlock();
-            if(block.getType() == null || !block.getType().equals(Material.WALL_SIGN)) {
+            if(block.getType() == null || !block.getType().name().contains("WALL_SIGN")) {
                 continue;
             }
             if (cloudSign.getConnectedServer() != null) {
@@ -215,7 +215,7 @@ public class CloudSignManager {
         for (CloudSign cloudSign : getSigns()) {
             Block block = cloudSign.getSignLocation().getBlock();
             CloudServerObject serverObject = CloudAPI.getInstance().getServer(cloudSign.getConnectedServer());
-            if(block.getType() == null || !block.getType().equals(Material.WALL_SIGN)) {
+            if(block.getType() == null || !block.getType().name().contains("WALL_SIGN")) {
                 continue;
             }
             if (cloudSign.getConnectedServer() == null) {

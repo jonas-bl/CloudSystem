@@ -3,6 +3,7 @@ package dev.javaprojekt.cloudsystem.cloud.cloudpacket.handler;
 import dev.javaprojekt.cloudsystem.cloud.cloudpacket.request.CloudRequestServerStartPacket;
 import dev.javaprojekt.cloudsystem.cloud.cloudpacket.request.CloudRequestServerStopPacket;
 import dev.javaprojekt.cloudsystem.cloud.cloudpacket.server.CloudServerConstructedPacket;
+import dev.javaprojekt.cloudsystem.cloud.cloudpacket.server.CloudServerForceStopPacket;
 import dev.javaprojekt.cloudsystem.cloud.cloudpacket.server.CloudServerStopPacket;
 import dev.javaprojekt.cloudsystem.cloud.cloudpacket.template.CloudTemplateUpdatePacket;
 import dev.javaprojekt.cloudsystem.cloud.cloudpacket.template.CloudTemplatesReloadPacket;
@@ -60,6 +61,9 @@ public class SlavePacketHandler {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        if(income.getClass() == CloudServerForceStopPacket.class) {
+
         }
     }
 

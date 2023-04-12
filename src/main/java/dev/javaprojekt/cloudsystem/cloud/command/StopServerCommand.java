@@ -1,9 +1,13 @@
 package dev.javaprojekt.cloudsystem.cloud.command;
 
 import dev.javaprojekt.cloudsystem.cloud.cloudpacket.request.CloudRequestServerStopPacket;
+import dev.javaprojekt.cloudsystem.cloud.cloudpacket.server.CloudServerForceStopPacket;
+import dev.javaprojekt.cloudsystem.cloud.cloudpacket.server.CloudServerStopPacket;
+import dev.javaprojekt.cloudsystem.cloud.commander.CloudCommander;
 import dev.javaprojekt.cloudsystem.cloud.consoleutil.ConsoleCommand;
 import dev.javaprojekt.cloudsystem.cloud.server.CloudServer;
 import dev.javaprojekt.cloudsystem.cloud.server.CloudServerManager;
+import dev.javaprojekt.cloudsystem.cloud.slave.manager.CloudSlaveManager;
 import dev.javaprojekt.cloudsystem.cloud.util.logger.CloudLogger;
 
 public class StopServerCommand extends ConsoleCommand {
@@ -17,7 +21,9 @@ public class StopServerCommand extends ConsoleCommand {
                 return;
             }
             CloudLogger.getInstance().log("Stopping server " + server.getName() + "...");
-            if(server.getNettyChannel() == null) {
+            if (server.getNettyChannel() == null) {
+                CloudSlaveManager.getInstance().getSlaveByName(server.getTemplate().getSlave()).getChannel().writeAndFlush(new CloudServerForceStopPacket(server.getServerUUID()));
+                CloudCommander.getSocketServer().getChannel().writeAndFlush(new CloudServerStopPacket(server.getServerUUID()));
                 CloudServerManager.getInstance().forceStopServer(server.getServerUUID());
                 CloudLogger.getInstance().log("Notice: Force stopped because Netty Channel is invalid.");
                 return;
