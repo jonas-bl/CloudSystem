@@ -12,6 +12,7 @@ import dev.javaprojekt.cloudsystem.cloud.server.ServerStarterQueue;
 import dev.javaprojekt.cloudsystem.cloud.slave.manager.CloudSlaveManager;
 import dev.javaprojekt.cloudsystem.cloud.util.logger.CloudLogger;
 import dev.javaprojekt.cloudsystem.file.FileManager;
+import dev.javaprojekt.cloudsystem.rest.RestApplication;
 import dev.javaprojekt.cloudsystem.socket.SocketServer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -31,7 +32,7 @@ public class CloudCommander {
     Created on 28th february 2021
     by Jonas Bleisteiner
     All rights belong to the author.
-    Any unauthorized use, decompiling or editing is strictly prohibited and may result in criminal prosecution.
+    Any unauthorized use, decompiling or editing is strictly prohibited
 
      */
 
@@ -65,6 +66,7 @@ public class CloudCommander {
         }
         socketServer.stop();
         CloudLogger.getInstance().log("Closed netty connection.");
+        RestApplication.shutdown();
     }
 
     public void enable() {
@@ -102,6 +104,7 @@ public class CloudCommander {
         new CloudPlayerManager();
         new ServerStarterQueue().start();
 
+        RestApplication.start();
         Runtime.getRuntime().addShutdownHook(new Thread(this::disable));
 
 

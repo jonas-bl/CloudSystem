@@ -24,7 +24,7 @@ public class CloudLoader {
     Created on 28th February 2021
     by Jonas Bleisteiner
     All rights belong to the author.
-    Any unauthorized use, decompiling or editing is strictly prohibited and may result in criminal prosecution.
+    Any unauthorized use, decompiling or editing is strictly prohibited
 
      */
 
